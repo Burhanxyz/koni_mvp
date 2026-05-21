@@ -31,7 +31,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.commit()
     conn.close()
     admin_chat_ids.add(chat_id)
-    await update.message.reply_text(f"Halo {admin_name}, berhasil mendaftar sebagai Admin Kopi Koni! (Chat ID: {chat_id})\n\nPerintah tersedia:\n/toggle_store - Buka/Tutup Toko\n/toggle_stock - Ubah status stok menu\n/voucher - Kelola voucher")
+    await update.message.reply_text(f"Halo {admin_name}, berhasil mendaftar sebagai Admin Kopi Koni! (Chat ID: {chat_id})\n\nKetik `/help` untuk melihat panduan lengkap perintah admin beserta format penggunaannya.", parse_mode='Markdown')
 
 def get_status_keyboard(order_id: str):
     keyboard = [
@@ -130,11 +130,11 @@ async def toggle_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
         c = conn.cursor()
         menus = c.execute("SELECT id, name, is_available FROM menus").fetchall()
         conn.close()
-        text = "Daftar Menu:\n"
+        text = "📋 *Daftar Menu & Stok Saat Ini* 📋\n\n"
         for m in menus:
-            status = "✅" if m["is_available"] else "❌"
-            text += f"{m['id']}. {m['name']} - {status}\n"
-        text += "\nBalas dengan: `/toggle_stock <id_menu>`"
+            status = "✅ Tersedia" if m["is_available"] else "❌ Habis"
+            text += f"`{m['id']}`. *{m['name']}* - {status}\n"
+        text += "\n✍️ *Cara mengubah stok:* `/toggle_stock <id_menu>`"
         await update.message.reply_text(text, parse_mode='Markdown')
         return
         
@@ -143,7 +143,7 @@ async def toggle_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     c = conn.cursor()
     row = c.execute("SELECT name, is_available FROM menus WHERE id = ?", (menu_id,)).fetchone()
     if not row:
-        await update.message.reply_text("Menu ID tidak ditemukan.")
+        await update.message.reply_text("⚠️ Menu ID tidak ditemukan. Gunakan `/toggle_stock` untuk melihat daftar ID.")
         conn.close()
         return
         
@@ -162,27 +162,43 @@ async def manage_voucher(update: Update, context: ContextTypes.DEFAULT_TYPE):
         c = conn.cursor()
         vs = c.execute("SELECT code, discount_amount, discount_type, is_active FROM vouchers").fetchall()
         conn.close()
-        text = "Daftar Voucher:\n"
+        text = "🎫 *Daftar Voucher Toko* 🎫\n\n"
         for v in vs:
-            status = "✅" if v["is_active"] else "❌"
+            status = "✅ Aktif" if v["is_active"] else "❌ Nonaktif"
             sym = "%" if v["discount_type"] == "percent" else "Rp"
-            val = f"{v['discount_amount']}{sym}" if sym=="%" else f"{sym}{v['discount_amount']}"
-            text += f"- {v['code']} ({val}) - {status}\n"
-        text += "\nTambah: `/voucher add <CODE> <AMOUNT> <fixed|percent>`\nUbah status: `/voucher toggle <CODE>`"
+            val = f"{v['discount_amount']}{sym}" if sym=="%" else f"{sym} {v['discount_amount']:,}"
+            text += f"- *{v['code']}* ({val}) - {status}\n"
+        text += (
+            "\n✍️ *Format Tambah Voucher:*\n"
+            "`/voucher add <KODE> <NILAI> <fixed|percent>`\n"
+            "Contoh: `/voucher add KONI20 20 percent`\n"
+            "Contoh: `/voucher add POTONGAN5K 5000 fixed`\n\n"
+            "✍️ *Format Ubah Status Aktif:*\n"
+            "`/voucher toggle <KODE>`\n"
+            "Contoh: `/voucher toggle KONI20`"
+        )
         await update.message.reply_text(text, parse_mode='Markdown')
         return
         
     cmd = args[0].lower()
     if cmd == "add" and len(args) >= 4:
         code = args[1].upper()
-        amount = int(args[2])
-        dtype = args[3].lower()
-        conn = database.get_db_connection()
-        c = conn.cursor()
-        c.execute("INSERT INTO vouchers (code, discount_amount, discount_type) VALUES (?, ?, ?)", (code, amount, dtype))
-        conn.commit()
-        conn.close()
-        await update.message.reply_text(f"Voucher {code} ditambahkan.")
+        try:
+            amount = int(args[2])
+            dtype = args[3].lower()
+            if dtype not in ('fixed', 'percent'):
+                await update.message.reply_text("⚠️ Jenis voucher harus `fixed` atau `percent`.")
+                return
+            conn = database.get_db_connection()
+            c = conn.cursor()
+            c.execute("INSERT OR REPLACE INTO vouchers (code, discount_amount, discount_type, is_active) VALUES (?, ?, ?, 1)", (code, amount, dtype))
+            conn.commit()
+            conn.close()
+            sym = "%" if dtype == "percent" else "Rp"
+            val = f"{amount}{sym}" if sym=="%" else f"{sym} {amount:,}"
+            await update.message.reply_text(f"✅ Voucher *{code}* dengan diskon *{val}* berhasil ditambahkan dan aktif!", parse_mode='Markdown')
+        except ValueError:
+            await update.message.reply_text("⚠️ Nilai voucher harus berupa angka.")
     elif cmd == "toggle" and len(args) >= 2:
         code = args[1].upper()
         conn = database.get_db_connection()
@@ -192,57 +208,121 @@ async def manage_voucher(update: Update, context: ContextTypes.DEFAULT_TYPE):
             new_status = 0 if row["is_active"] else 1
             c.execute("UPDATE vouchers SET is_active = ? WHERE code = ?", (new_status, code))
             conn.commit()
-            await update.message.reply_text(f"Voucher {code} {'diaktifkan' if new_status else 'dinonaktifkan'}.")
+            status_str = "diaktifkan" if new_status else "dinonaktifkan"
+            await update.message.reply_text(f"✅ Voucher *{code}* telah *{status_str}*.", parse_mode='Markdown')
+        else:
+            await update.message.reply_text("⚠️ Kode voucher tidak ditemukan.")
         conn.close()
+    else:
+        await update.message.reply_text("⚠️ Format salah. Ketik `/voucher` untuk bantuan format.")
 
 async def add_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_admin(update.effective_chat.id): return
-    args = context.args
-    # Format: /addmenu "Nama Menu" "Kategori" "Deskripsi" Harga
-    if len(args) < 4:
-        await update.message.reply_text('Format salah. Gunakan:\n`/addmenu "Kopi Hitam" "Kopi" "Kopi tradisional" 10000`', parse_mode='Markdown')
+    raw = update.message.text.strip()
+    import re
+    # Match pattern: /addmenu "Name" "Category" "Description" Price
+    pattern = r'^\/addmenu\s+"([^"]+)"\s+(?:"([^"]+)"|(\S+))\s+"([^"]+)"\s+(\d+)$'
+    match = re.match(pattern, raw)
+    if not match:
+        await update.message.reply_text(
+            '⚠️ *Format Salah!*\n\n'
+            'Gunakan format berikut:\n'
+            '`/addmenu "<Nama Menu>" "<Kategori (c/nc)>" "<Deskripsi>" <Harga>`\n\n'
+            '*Contoh Kopi (c):*\n'
+            '`/addmenu "Espresso Avocado" "c" "Kopi espresso dengan alpukat" 18000`\n\n'
+            '*Contoh Non-Kopi (nc):*\n'
+            '`/addmenu "Vanilla Latte" "nc" "Susu vanilla premium" 15000`',
+            parse_mode='Markdown'
+        )
         return
         
     try:
-        price = int(args[-1])
-        # Assuming args are split correctly if user used quotes, otherwise it's hard. 
-        # A simpler way is to just let them use underscores for spaces: /addmenu Kopi_Hitam Kopi Deskripsi 10000
-        # But telegram handles quotes in args? No, python-telegram-bot's context.args splits by space.
-        # Let's just use string parsing from the raw text
-        raw = update.message.text.split(maxsplit=1)[1]
-        import re
-        matches = re.findall(r'"([^"]*)"', raw)
-        if len(matches) == 3:
-            name, cat, desc = matches
-            price_str = raw.split()[-1]
-            price = int(price_str)
-            conn = database.get_db_connection()
-            c = conn.cursor()
-            c.execute("INSERT INTO menus (name, category, description, price) VALUES (?, ?, ?, ?)", (name, cat, desc, price))
-            conn.commit()
-            conn.close()
-            await update.message.reply_text(f"Menu '{name}' berhasil ditambahkan.")
+        name = match.group(1)
+        cat_raw = match.group(2) or match.group(3)
+        desc = match.group(4)
+        price = int(match.group(5))
+        
+        # Translate category shortcut
+        cat_lower = cat_raw.lower()
+        if cat_lower in ('c', 'kopi'):
+            category = 'Kopi'
+        elif cat_lower in ('nc', 'non-kopi', 'non kopi', 'nonkopi'):
+            category = 'Non-Kopi'
+        else:
+            await update.message.reply_text(
+                '⚠️ *Kategori tidak dikenal!*\n'
+                'Gunakan `c` untuk Kopi atau `nc` untuk Non-Kopi.'
+            )
             return
+            
+        conn = database.get_db_connection()
+        c = conn.cursor()
+        c.execute("INSERT INTO menus (name, category, description, price) VALUES (?, ?, ?, ?)", (name, category, desc, price))
+        conn.commit()
+        conn.close()
+        await update.message.reply_text(f"✅ *Menu berhasil ditambahkan!*\n\n• Nama: {name}\n• Kategori: {category}\n• Deskripsi: {desc}\n• Harga: Rp {price:,}", parse_mode='Markdown')
     except Exception as e:
-        pass
-    await update.message.reply_text('Format salah. Gunakan tanda kutip:\n`/addmenu "Kopi Hitam" "Kopi" "Kopi tradisional" 10000`', parse_mode='Markdown')
+        await update.message.reply_text(f"⚠️ Gagal menambahkan menu: {e}")
 
 async def delete_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_admin(update.effective_chat.id): return
     args = context.args
     if not args:
-        await update.message.reply_text('Gunakan: `/deletemenu <id_menu>`', parse_mode='Markdown')
+        await update.message.reply_text('✍️ Gunakan: `/deletemenu <id_menu>`\n_Contoh: /deletemenu 5_', parse_mode='Markdown')
         return
     menu_id = args[0]
     conn = database.get_db_connection()
     c = conn.cursor()
+    row = c.execute("SELECT name FROM menus WHERE id = ?", (menu_id,)).fetchone()
+    if not row:
+        await update.message.reply_text("⚠️ Menu ID tidak ditemukan. Gunakan `/toggle_stock` untuk melihat daftar ID.")
+        conn.close()
+        return
     c.execute("DELETE FROM menus WHERE id = ?", (menu_id,))
     conn.commit()
     conn.close()
-    await update.message.reply_text(f"Menu ID {menu_id} dihapus.")
+    await update.message.reply_text(f"✅ Menu *{row['name']}* (ID: {menu_id}) berhasil dihapus.", parse_mode='Markdown')
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_admin(update.effective_chat.id): return
+    help_text = (
+        "💡 *Panduan Perintah Bot Admin Kopi Koni* 💡\n\n"
+        "Berikut adalah daftar semua fungsi manajemen toko beserta format penggunaannya:\n\n"
+        "🟢 *Manajemen Toko*\n"
+        "• `/toggle_store` \n"
+        "  _Fungsi: Membuka atau menutup toko secara instan._\n"
+        "  _Status saat ini akan langsung diubah di website pelanggan._\n\n"
+        "🟢 *Manajemen Stok Menu*\n"
+        "• `/toggle_stock` \n"
+        "  _Fungsi: Melihat daftar menu dan mengubah ketersediaan stok._\n"
+        "• `/toggle_stock <id_menu>` \n"
+        "  _Fungsi: Mengubah stok menu (Tersedia ↔ Habis)._\n"
+        "  _Contoh: /toggle_stock 3_\n\n"
+        "🟢 *Manajemen Menu (Tambah/Hapus)*\n"
+        "• `/addmenu \"<Nama Menu>\" \"<Kategori (c/nc)>\" \"<Deskripsi>\" <Harga>` \n"
+        "  _Fungsi: Menambahkan menu baru ke database._\n"
+        "  _Gunakan shortcut Kategori: `c` (Kopi) atau `nc` (Non-Kopi)._\n"
+        "  _Contoh: /addmenu \"Espresso Avocado\" \"c\" \"Kopi espresso dengan buah alpukat segar\" 18000_\n"
+        "• `/deletemenu <id_menu>` \n"
+        "  _Fungsi: Menghapus menu secara permanen dari database._\n"
+        "  _Contoh: /deletemenu 5_\n\n"
+        "🟢 *Manajemen Voucher*\n"
+        "• `/voucher` \n"
+        "  _Fungsi: Melihat daftar seluruh voucher aktif._\n"
+        "• `/voucher add <KODE> <NILAI> <fixed|percent>` \n"
+        "  _Fungsi: Menambahkan voucher diskon baru._\n"
+        "  _Contoh: /voucher add PROMO15 15 percent (Diskon 15%)_\n"
+        "  _Contoh: /voucher add POTONGAN10K 10000 fixed (Potongan Rp 10.000)_\n"
+        "• `/voucher toggle <KODE>` \n"
+        "  _Fungsi: Mengaktifkan atau menonaktifkan voucher._\n"
+        "  _Contoh: /voucher toggle POTONGAN10K_\n\n"
+        "📌 _Gunakan perintah /start terlebih dahulu untuk mendaftarkan akun Telegram Anda sebagai admin._"
+    )
+    await update.message.reply_text(help_text, parse_mode='Markdown')
 
 # Handlers
 bot_app.add_handler(CommandHandler("start", start_command))
+bot_app.add_handler(CommandHandler("help", help_command))
 bot_app.add_handler(CommandHandler("toggle_store", toggle_store))
 bot_app.add_handler(CommandHandler("toggle_stock", toggle_stock))
 bot_app.add_handler(CommandHandler("voucher", manage_voucher))

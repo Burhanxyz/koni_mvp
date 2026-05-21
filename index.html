@@ -88,12 +88,15 @@
               <span>Delivery ke Kamar</span>
             </div>
           </div>
-          <div style="margin-top:12px">
+          <div id="delivery-inputs-container" style="margin-top:12px">
             <label class="text-caption text-muted">Pilih Lantai</label>
             <select id="floor-select" class="floor-select"></select>
             <div id="dynamic-delivery-fields" style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
                 <!-- Dynamically populated based on floor selection -->
             </div>
+          </div>
+          <div id="pickup-note-container" style="margin-top:12px; display:none; background: var(--surface-container-highest); padding: 12px; border-radius: var(--radius-medium); font-size: 13px; color: var(--on-surface-variant); border-left: 4px solid var(--primary);">
+            📌 <strong>Catatan:</strong> Pesanan dapat diambil ke kamar 4.02 (Lantai 4 No. 02).
           </div>
         </div>
         <!-- Divider -->

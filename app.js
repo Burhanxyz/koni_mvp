@@ -66,7 +66,7 @@
       document.querySelector('.status-banner .status-dot').style.backgroundColor = 'var(--error)';
       document.querySelector('.status-banner .status-text').textContent = 'Store Closed';
       document.querySelector('.status-banner .text-caption').textContent = 'Pemesanan ditutup sementara';
-      list.innerHTML = '<p class="text-body text-muted" style="text-align:center;padding:40px;">Maaf, Kopi Koni sedang tutup saat ini.</p>';
+      list.innerHTML = '<p class="text-body text-muted" style="text-align:center;padding:40px;line-height:1.6;">Maaf, Kopi Koni sedang tutup saat ini.<br><br>Hubungi kami via <a href="https://wa.me/6285171234038" target="_blank" style="color:var(--primary);text-decoration:underline;font-weight:600;">WhatsApp (085171234038)</a> untuk info selengkapnya.</p>';
       return;
     } else {
       document.querySelector('.status-banner .status-dot').style.backgroundColor = 'var(--primary)';
@@ -227,6 +227,16 @@
       card.onclick = () => { state.deliveryOption = card.dataset.option; renderCart(); };
     });
 
+    const deliveryInputs = document.getElementById('delivery-inputs-container');
+    const pickupNote = document.getElementById('pickup-note-container');
+    if (state.deliveryOption === 'pickup') {
+      if (deliveryInputs) deliveryInputs.style.display = 'none';
+      if (pickupNote) pickupNote.style.display = 'block';
+    } else {
+      if (deliveryInputs) deliveryInputs.style.display = 'block';
+      if (pickupNote) pickupNote.style.display = 'none';
+    }
+
     // Floor select
     const floorSel = document.getElementById('floor-select');
     if (floorSel && !floorSel.children.length) {
@@ -297,11 +307,9 @@
     if (floor === 'Lantai 1' || floor === 'Lantai 2') {
         html = `<input id="room-input" class="room-input" type="text" placeholder="Dikirim ke mana? (contoh: Lobi)" value="${state.roomNumber}">`;
     } else if (floor === 'Lantai 7' || floor === 'Lantai 8') {
-        const roomVal = state.roomNumber.split(' (')[0];
         const hasCowo = state.roomNumber.includes('Cowo');
         html = `
-            <input id="room-input" class="room-input" type="text" placeholder="Nomor Kamar (contoh: 7.02)" value="${roomVal}">
-            <select id="lift-select" class="floor-select" style="margin-top:8px">
+            <select id="lift-select" class="floor-select">
                 <option value="Lift Cewe" ${!hasCowo ? 'selected' : ''}>Lewat Lift Cewe</option>
                 <option value="Lift Cowo" ${hasCowo ? 'selected' : ''}>Lewat Lift Cowo</option>
             </select>
@@ -321,7 +329,13 @@
         const roomInput = document.getElementById('room-input');
         const liftSelect = document.getElementById('lift-select');
         let details = roomInput ? roomInput.value : '';
-        if (liftSelect) details += ` (${liftSelect.value})`;
+        if (liftSelect) {
+            if (floor === 'Lantai 7' || floor === 'Lantai 8') {
+                details = liftSelect.value;
+            } else {
+                details += ` (${liftSelect.value})`;
+            }
+        }
         state.roomNumber = details;
     };
     
@@ -571,7 +585,9 @@
       renderTracking();
     };
     document.getElementById('order-items-toggle').onclick = toggleOrderItems;
-    document.getElementById('btn-contact-admin').onclick = () => showToast('Hubungi admin via WhatsApp/Telegram');
+    document.getElementById('btn-contact-admin').onclick = () => {
+        window.open('https://wa.me/6285171234038', '_blank');
+    };
     document.getElementById('btn-return-home').onclick = () => {
       state.activeOrder = null;
       navigate('home');
