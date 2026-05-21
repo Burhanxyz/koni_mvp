@@ -109,7 +109,9 @@ async def status_button_callback(update: Update, context: ContextTypes.DEFAULT_T
 
 async def toggle_store(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    if not is_admin(chat_id): return
+    if not is_admin(chat_id):
+        await update.message.reply_text("⚠️ Maaf, Anda bukan admin terdaftar. Ketik /start untuk mendaftar.")
+        return
     
     conn = database.get_db_connection()
     c = conn.cursor()
@@ -123,7 +125,9 @@ async def toggle_store(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Pemesanan toko sekarang: *{status_str}*", parse_mode='Markdown')
 
 async def toggle_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_admin(update.effective_chat.id): return
+    if not is_admin(update.effective_chat.id):
+        await update.message.reply_text("⚠️ Maaf, Anda bukan admin terdaftar. Ketik /start untuk mendaftar.")
+        return
     args = context.args
     if not args:
         conn = database.get_db_connection()
@@ -155,7 +159,9 @@ async def toggle_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Stok *{row['name']}* sekarang: *{status_str}*", parse_mode='Markdown')
 
 async def manage_voucher(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_admin(update.effective_chat.id): return
+    if not is_admin(update.effective_chat.id):
+        await update.message.reply_text("⚠️ Maaf, Anda bukan admin terdaftar. Ketik /start untuk mendaftar.")
+        return
     args = context.args
     if len(args) == 0:
         conn = database.get_db_connection()
@@ -217,7 +223,9 @@ async def manage_voucher(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ Format salah. Ketik `/voucher` untuk bantuan format.")
 
 async def add_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_admin(update.effective_chat.id): return
+    if not is_admin(update.effective_chat.id):
+        await update.message.reply_text("⚠️ Maaf, Anda bukan admin terdaftar. Ketik /start untuk mendaftar.")
+        return
     raw = update.message.text.strip()
     import re
     # Match pattern: /addmenu "Name" "Category" "Description" Price
@@ -265,7 +273,9 @@ async def add_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"⚠️ Gagal menambahkan menu: {e}")
 
 async def delete_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_admin(update.effective_chat.id): return
+    if not is_admin(update.effective_chat.id):
+        await update.message.reply_text("⚠️ Maaf, Anda bukan admin terdaftar. Ketik /start untuk mendaftar.")
+        return
     args = context.args
     if not args:
         await update.message.reply_text('✍️ Gunakan: `/deletemenu <id_menu>`\n_Contoh: /deletemenu 5_', parse_mode='Markdown')
