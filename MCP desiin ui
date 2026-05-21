@@ -1,0 +1,25 @@
+## Stitch Instructions
+
+Get the images and code for the following Stitch project's screens:
+
+## Project
+Title: Kopi Koni Dormitory Ordering
+ID: 6031852991347717163
+
+## Screens:
+1. Order Tracking Detail
+    ID: 219241dfd31d446f84f1c25686d34b09
+
+2. Cart & Checkout
+    ID: 0b86c055760c4cfa809f5bfecbb191b4
+
+3. Menu Customization
+    ID: 33bd5c64ce9943d58035d4f79e6fb2a1
+
+4. Home & Menu
+    ID: d6fb70dace2446dd8e086569af540f01
+
+5. Payment & Tracking
+    ID: ba9f04f4fc2f4758801b13c6a3034886
+
+Use a utility like `curl -L` to download the hosted URLs.

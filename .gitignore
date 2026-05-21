@@ -1,0 +1,19 @@
+# Environments
+venv/
+env/
+.env
+
+# Python caching
+__pycache__/
+*.pyc
+
+# Database (Sebaiknya tidak di-upload agar data pelanggan/admin aman)
+kopi_koni.db
+
+# Tidak terpakai lagi (Node.js wrapper lama)
+qris-dinamis-main/
+
+# Dokumen Desain (Bisa diupload jika memang ingin disimpan, tapi biasanya diabaikan)
+*.pdf
+prd.txt
+ss desain/

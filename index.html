@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kopi Koni — Dormitory Coffee Ordering</title>
+  <meta name="description" content="Pesan kopi favoritmu dari Kopi Koni langsung dari kamar asrama. Cepat, mudah, dan premium.">
+  <meta name="theme-color" content="#121212">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-container">
+
+  <!-- ════════════ PAGE: HOME ════════════ -->
+  <div id="page-home" class="page active">
+    <header class="app-header">
+      <h1>Kopi Koni</h1>
+    </header>
+    <div class="page-content">
+      <!-- Status Banner -->
+      <section class="status-banner">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="status-dot"></span>
+          <span class="text-label status-text">Open Order</span>
+        </div>
+        <span class="text-caption text-muted">Closes at 23:00</span>
+      </section>
+      <!-- Category Tabs -->
+      <nav id="category-tabs" class="category-tabs"></nav>
+      <!-- Menu List -->
+      <section id="menu-list" class="menu-list"></section>
+    </div>
+  </div>
+
+  <!-- ════════════ PAGE: CART ════════════ -->
+  <div id="page-cart" class="page">
+    <header class="app-header">
+      <button id="cart-back" class="header-back"><span class="material-symbols-outlined">arrow_back</span></button>
+      <h1>Kopi Koni</h1>
+    </header>
+    <div class="page-content">
+      <!-- Empty State -->
+      <div id="cart-empty" class="hidden" style="text-align:center;padding:60px 20px">
+        <span class="material-symbols-outlined" style="font-size:64px;color:var(--outline-variant)">shopping_cart</span>
+        <p class="text-body text-muted" style="margin-top:16px">Keranjang masih kosong</p>
+        <button class="btn-primary" style="margin-top:24px;max-width:200px;margin-left:auto;margin-right:auto" onclick="document.getElementById('cart-back').click()">Lihat Menu</button>
+      </div>
+      <!-- Cart Content -->
+      <div id="cart-content">
+        <h2 class="section-title">Pesananmu</h2>
+        <div id="cart-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        <button id="btn-add-more" class="add-more">
+          <span class="material-symbols-outlined" style="font-size:20px">add_circle_outline</span>
+          Tambah Item Lain
+        </button>
+        <!-- Divider -->
+        <div class="divider" style="margin:8px 0"></div>
+        <!-- Customer Data -->
+        <div class="voucher-section">
+          <h3 class="section-title">Data Pemesan</h3>
+          <input id="customer-name" class="voucher-input" type="text" placeholder="Nama Lengkap">
+          <input id="customer-wa" class="voucher-input" type="tel" placeholder="No. WhatsApp" style="margin-top:8px">
+        </div>
+        <!-- Divider -->
+        <div class="divider" style="margin:8px 0"></div>
+        <!-- Voucher -->
+        <div class="voucher-section">
+          <h3 class="section-title">Punya Voucher?</h3>
+          <div class="voucher-row">
+            <input id="voucher-input" class="voucher-input" type="text" placeholder="Masukkan Kode Voucher">
+            <button id="btn-apply-voucher" class="btn-voucher">Terapkan</button>
+          </div>
+        </div>
+        <!-- Divider -->
+        <div class="divider" style="margin:8px 0"></div>
+        <!-- Delivery Options -->
+        <div class="delivery-section">
+          <h3 class="section-title">Opsi Pengambilan</h3>
+          <div class="delivery-cards">
+            <div class="delivery-card" data-option="pickup">
+              <div class="radio-dot"></div>
+              <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">storefront</span>
+              <span>Pickup di Kamar</span>
+            </div>
+            <div class="delivery-card selected" data-option="delivery">
+              <div class="radio-dot"></div>
+              <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">local_shipping</span>
+              <span>Delivery ke Kamar</span>
+            </div>
+          </div>
+          <div style="margin-top:12px">
+            <label class="text-caption text-muted">Pilih Lantai</label>
+            <select id="floor-select" class="floor-select"></select>
+            <div id="dynamic-delivery-fields" style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+                <!-- Dynamically populated based on floor selection -->
+            </div>
+          </div>
+        </div>
+        <!-- Divider -->
+        <div class="divider" style="margin:8px 0"></div>
+        <!-- Summary -->
+        <div class="summary-section">
+          <div class="summary-row">
+            <span class="text-body">Subtotal</span>
+            <span class="text-body" id="summary-subtotal">Rp 0</span>
+          </div>
+          <div class="summary-row">
+            <span class="text-body">Diskon</span>
+            <span class="text-body discount-value" id="summary-discount">- Rp 0</span>
+          </div>
+          <div class="summary-row total">
+            <span class="label">Total Akhir</span>
+            <span class="value" id="summary-total">Rp 0</span>
+          </div>
+        </div>
+        <!-- Pay Button -->
+        <button id="btn-pay" class="btn-primary" style="margin-top:16px">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;font-size:20px">lock</span>
+          Bayar Sekarang
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ PAGE: PAYMENT ════════════ -->
+  <div id="page-payment" class="page">
+    <header class="app-header">
+      <button id="payment-back" class="header-back"><span class="material-symbols-outlined">arrow_back</span></button>
+      <h1>Kopi Koni</h1>
+    </header>
+    <div class="page-content" style="align-items:center;justify-content:center;gap:24px;padding-top:40px">
+      <h2 class="text-headline-mobile" style="text-align:center">Pembayaran QRIS</h2>
+      <div class="qris-container">
+        <img id="qris-image" src="" alt="QRIS Code" style="width:100%; max-width:200px; display:block; margin:0 auto; border-radius:8px;">
+        <p style="color:#333;font-weight:600;font-size:14px;text-align:center;margin-top:16px;">Scan QR Code untuk membayar</p>
+      </div>
+      <div class="payment-info">
+        <p class="text-body text-muted">Kode Pemesanan</p>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+          <p id="payment-order-id" class="text-headline-md text-on-surface">KONI-XXXX</p>
+          <button id="btn-copy-id" class="btn-ghost" style="color:var(--secondary)"><span class="material-symbols-outlined" style="font-size:20px">content_copy</span></button>
+        </div>
+        <p class="text-body text-muted" style="margin-top:16px">Total Pembayaran</p>
+        <p id="payment-total" class="text-headline-lg text-gold">Rp 0</p>
+        <p class="text-caption text-muted" style="margin-top:8px">Selesaikan pembayaran dalam</p>
+        <p id="payment-timer" class="payment-timer">05:00</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px">
+        <button id="btn-download-qris" class="btn-outline-gold">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;font-size:20px">download</span>
+          Download QRIS
+        </button>
+        <button id="btn-confirm-payment" class="btn-primary">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;font-size:20px">check_circle</span>
+          Konfirmasi Pembayaran
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ PAGE: TRACKING ════════════ -->
+  <div id="page-tracking" class="page">
+    <header class="app-header">
+      <button id="tracking-back" class="header-back"><span class="material-symbols-outlined">arrow_back</span></button>
+      <h1>Kopi Koni</h1>
+    </header>
+    <div id="tracking-content" class="page-content">
+      <!-- Search Order Section (Hidden when tracking an active order) -->
+      <div id="tracking-search" class="voucher-section">
+        <h3 class="section-title">Lacak Pesanan</h3>
+        <p class="text-body text-muted" style="margin-bottom:12px">Masukkan kode pemesanan untuk melacak status pesanan Anda.</p>
+        <div class="voucher-row">
+          <input id="search-order-input" class="voucher-input" type="text" placeholder="KONI-XXXX">
+          <button id="btn-search-order" class="btn-voucher">Cari</button>
+        </div>
+      </div>
+      <!-- Active Order Section (Hidden when no order) -->
+      <div id="tracking-active" class="hidden" style="display:flex;flex-direction:column;gap:16px;width:100%">
+        <!-- Order Card -->
+        <div class="order-card">
+          <div>
+            <div class="order-id-label text-caption">Kode Pemesanan</div>
+            <div id="track-order-id" class="order-id">KONI-XXXX</div>
+          </div>
+          <div>
+            <div class="order-total-label text-caption">Total Harga</div>
+            <div id="track-order-total" class="order-total">Rp 0</div>
+          </div>
+        </div>
+        <!-- Timeline -->
+        <div id="timeline" class="timeline"></div>
+        <!-- Order Items Toggle -->
+        <button id="order-items-toggle" class="order-items-toggle">
+          <span style="display:flex;align-items:center;gap:8px">
+            <span class="material-symbols-outlined" style="font-size:20px">receipt_long</span>
+            Lihat Detail Pesanan
+          </span>
+          <span class="material-symbols-outlined">expand_more</span>
+        </button>
+        <div id="order-items-list" class="order-items-list"></div>
+        <!-- Actions -->
+        <div class="tracking-actions">
+          <button id="btn-contact-admin" class="btn-outline-gold">
+            <span class="material-symbols-outlined" style="font-size:20px">chat</span>
+            Hubungi Admin
+          </button>
+          <button id="btn-return-home" class="btn-primary">
+            <span class="material-symbols-outlined" style="font-size:20px">home</span>
+            Kembali ke Beranda
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ FAB Cart ════════════ -->
+  <button id="fab-cart" class="fab-cart hidden" aria-label="View Cart">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">shopping_cart</span>
+    <span class="badge">0</span>
+  </button>
+
+  <!-- ════════════ Bottom Navigation ════════════ -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-page="home">
+      <div class="nav-icon-wrap"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">coffee</span></div>
+      <span class="nav-label">Menu</span>
+    </button>
+    <button class="nav-item" data-page="tracking">
+      <div class="nav-icon-wrap"><span class="material-symbols-outlined">receipt_long</span></div>
+      <span class="nav-label">Pesanan</span>
+    </button>
+  </nav>
+
+  <!-- ════════════ MODAL: Customization ════════════ -->
+  <div id="modal-customization" class="modal-overlay">
+    <div class="bottom-sheet">
+      <div class="sheet-header">
+        <div>
+          <h2 id="custom-item-name">Item Name</h2>
+          <p id="custom-item-price" class="price-tag">Rp 0</p>
+        </div>
+        <button id="btn-close-modal" class="btn-close">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="sheet-body">
+        <section class="option-section">
+          <h3>
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">thermostat</span>
+            Opsi Suhu
+          </h3>
+          <div id="options-suhu" class="option-list"></div>
+        </section>
+        <div class="divider"></div>
+        <section class="option-section">
+          <h3>
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">fork_spoon</span>
+            Opsi Manis
+          </h3>
+          <div id="options-manis" class="option-list"></div>
+        </section>
+      </div>
+      <div class="sheet-footer">
+        <button id="btn-add-to-cart" class="btn-primary">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;font-size:20px">shopping_cart</span>
+          Tambah ke Keranjang <span id="custom-cta-price">Rp 0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+lantai 1,2 :beri pertanyaan dikirim kemana
+lantai 3-5 :masukan no kamar 1-16
+lantai 6 :kamar 1-8 dikirim lewat lift cwe ,kamar 9-16 sama seperti kamar lantai 3-5
+lantai 7,8 :beri opsi lift cwe/ lift cwe
+
