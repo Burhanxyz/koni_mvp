@@ -24,9 +24,16 @@ def init_db():
             delivery_mode TEXT,
             delivery_floor TEXT,
             delivery_room TEXT,
+            customer_note TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Check if customer_note column exists (for migrations)
+    c.execute("PRAGMA table_info(orders)")
+    columns = [col[1] for col in c.fetchall()]
+    if "customer_note" not in columns:
+        c.execute("ALTER TABLE orders ADD COLUMN customer_note TEXT")
     
     # Create order_items table
     c.execute('''

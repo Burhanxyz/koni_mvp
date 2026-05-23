@@ -16,6 +16,7 @@
     roomNumber: '',
     customerName: '',
     customerWA: '',
+    customerNote: '',
     activeOrder: null,
     orderItemsOpen: false,
   };
@@ -66,7 +67,7 @@
       document.querySelector('.status-banner .status-dot').style.backgroundColor = 'var(--error)';
       document.querySelector('.status-banner .status-text').textContent = 'Store Closed';
       document.querySelector('.status-banner .text-caption').textContent = 'Pemesanan ditutup sementara';
-      list.innerHTML = '<p class="text-body text-muted" style="text-align:center;padding:40px;line-height:1.6;">Maaf, Kopi Koni sedang tutup saat ini.<br><br>Hubungi kami via <a href="https://wa.me/6285171234038" target="_blank" style="color:var(--primary);text-decoration:underline;font-weight:600;">WhatsApp (085171234038)</a> untuk info selengkapnya.</p>';
+      list.innerHTML = '<p class="text-body text-muted" style="text-align:center;padding:40px;line-height:1.6;">Maaf, Kopi Koni sedang tutup saat ini.<br><br>Hubungi kami via <a href="https://wa.me/6285171234038?text=Halo%20atmin%20Subhan%20tampan,%20aku%20mau%20tanya%0A" target="_blank" style="color:var(--primary);text-decoration:underline;font-weight:600;">WhatsApp (085171234038)</a> untuk info selengkapnya.</p>';
       return;
     } else {
       document.querySelector('.status-banner .status-dot').style.backgroundColor = 'var(--primary)';
@@ -508,6 +509,28 @@
     document.getElementById('btn-pay').onclick = async () => {
       if (state.cart.length === 0) return;
       
+      if (!state.customerName || !state.customerName.trim()) {
+        showToast('Nama Lengkap wajib diisi!');
+        const nameInput = document.getElementById('customer-name');
+        if (nameInput) {
+          nameInput.focus();
+          nameInput.style.borderColor = 'var(--error)';
+          setTimeout(() => { nameInput.style.borderColor = ''; }, 3000);
+        }
+        return;
+      }
+
+      if (!state.customerWA || !state.customerWA.trim()) {
+        showToast('No. WhatsApp wajib diisi!');
+        const waInput = document.getElementById('customer-wa');
+        if (waInput) {
+          waInput.focus();
+          waInput.style.borderColor = 'var(--error)';
+          setTimeout(() => { waInput.style.borderColor = ''; }, 3000);
+        }
+        return;
+      }
+
       const btnPay = document.getElementById('btn-pay');
       const origText = btnPay.textContent;
       btnPay.textContent = 'Memproses...';
@@ -517,6 +540,7 @@
           const payload = {
               customerName: state.customerName,
               customerWA: state.customerWA,
+              customerNote: state.customerNote,
               deliveryOption: state.deliveryOption,
               selectedFloor: state.selectedFloor,
               roomNumber: state.roomNumber,
@@ -547,6 +571,10 @@
           state.cart = [];
           state.discount = 0;
           state.voucherCode = '';
+          state.customerNote = '';
+          
+          const noteInput = document.getElementById('customer-note');
+          if (noteInput) noteInput.value = '';
           
           navigate('payment');
       } catch (e) {
@@ -586,7 +614,7 @@
     };
     document.getElementById('order-items-toggle').onclick = toggleOrderItems;
     document.getElementById('btn-contact-admin').onclick = () => {
-        window.open('https://wa.me/6285171234038', '_blank');
+        window.open('https://wa.me/6285171234038?text=Halo%20atmin%20Subhan%20tampan,%20aku%20mau%20tanya%0A', '_blank');
     };
     document.getElementById('btn-return-home').onclick = () => {
       state.activeOrder = null;
@@ -599,6 +627,8 @@
     if (nameInput) nameInput.oninput = (e) => { state.customerName = e.target.value; };
     const waInput = document.getElementById('customer-wa');
     if (waInput) waInput.oninput = (e) => { state.customerWA = e.target.value; };
+    const noteInput = document.getElementById('customer-note');
+    if (noteInput) noteInput.oninput = (e) => { state.customerNote = e.target.value; };
 
     // Removed static room input binding, it is now dynamic in renderDeliveryFields
 

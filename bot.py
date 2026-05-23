@@ -46,14 +46,15 @@ def get_status_keyboard(order_id: str):
     ]
     return InlineKeyboardMarkup(keyboard)
 
-async def send_new_order_notification(order_id: str, customer_name: str, customer_wa: str, total: int, delivery: str, items: str):
+async def send_new_order_notification(order_id: str, customer_name: str, customer_wa: str, total: int, delivery: str, items: str, customer_note: str = ""):
+    note_str = f"\n📝 *Catatan*: {customer_note}" if customer_note else ""
     message = (
         f"🚨 *PESANAN BARU!* 🚨\n\n"
         f"💳 *Order ID*: {order_id}\n"
         f"👤 *Pemesan*: {customer_name}\n"
         f"📱 *WA*: {customer_wa}\n"
         f"💰 *Total*: Rp {total:,}\n"
-        f"📦 *Pengiriman*: {delivery}\n\n"
+        f"📦 *Pengiriman*: {delivery}{note_str}\n\n"
         f"🛒 *Detail Pesanan*:\n{items}\n\n"
         f"Pilih status pesanan di bawah ini:"
     )
@@ -87,6 +88,9 @@ async def status_button_callback(update: Update, context: ContextTypes.DEFAULT_T
             c = conn.cursor()
             c.execute("UPDATE orders SET status = ? WHERE id = ?", (new_status, order_id))
             conn.commit()
+            
+            # Fetch order details for WhatsApp link generation
+            order_row = c.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
             conn.close()
             
             status_map = {
@@ -99,8 +103,26 @@ async def status_button_callback(update: Update, context: ContextTypes.DEFAULT_T
             new_text = query.message.text + f"\n\n✅ *Status Update*: {status_map[new_status]}"
             
             try:
-                # If finished, maybe remove the buttons
+                # If finished, maybe remove the buttons and add copyable WhatsApp message
                 if new_status == 4:
+                    if order_row:
+                        import urllib.parse
+                        wa_num = order_row["customer_wa"]
+                        clean_wa = "".join(filter(str.isdigit, wa_num))
+                        if clean_wa.startswith("0"):
+                            clean_wa = "62" + clean_wa[1:]
+                        elif not clean_wa.startswith("62") and not clean_wa.startswith("+"):
+                            clean_wa = "62" + clean_wa
+                        
+                        feedback_msg = f"Halo {order_row['customer_name']}, pesanan Kopi Koni kamu (ID: {order_id}) sudah selesai. Terima kasih sudah memesan!"
+                        encoded_feedback = urllib.parse.quote(feedback_msg)
+                        wa_link_with_text = f"https://wa.me/{clean_wa}?text={encoded_feedback}"
+                        
+                        new_text += (
+                            f"\n\n📱 *Hubungi WA*: [Kirim ke WhatsApp]({wa_link_with_text})\n"
+                            f"👇 *Ketuk pesan di bawah untuk menyalin*:\n"
+                            f"`{feedback_msg}`"
+                        )
                     await query.edit_message_text(text=new_text, parse_mode='Markdown')
                 else:
                     await query.edit_message_text(text=new_text, parse_mode='Markdown', reply_markup=get_status_keyboard(order_id))

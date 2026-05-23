@@ -39,6 +39,7 @@ class OrderItemModel(BaseModel):
 class OrderPayload(BaseModel):
     customerName: str
     customerWA: str
+    customerNote: Optional[str] = ""
     deliveryOption: str
     selectedFloor: str
     roomNumber: str
@@ -70,8 +71,8 @@ async def create_order(order: OrderPayload):
     conn = database.get_db_connection()
     c = conn.cursor()
     c.execute(
-        "INSERT INTO orders (id, customer_name, customer_wa, total_price, qris_payload, delivery_mode, delivery_floor, delivery_room) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        (order_id, order.customerName, order.customerWA, total, qris_payload, order.deliveryOption, order.selectedFloor, order.roomNumber)
+        "INSERT INTO orders (id, customer_name, customer_wa, total_price, qris_payload, delivery_mode, delivery_floor, delivery_room, customer_note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (order_id, order.customerName, order.customerWA, total, qris_payload, order.deliveryOption, order.selectedFloor, order.roomNumber, order.customerNote)
     )
     
     for item in order.items:
@@ -94,7 +95,8 @@ async def create_order(order: OrderPayload):
         customer_wa=order.customerWA,
         total=total,
         delivery=delivery_str,
-        items=items_str
+        items=items_str,
+        customer_note=order.customerNote or ""
     )
 
     return JSONResponse({"id": order_id, "qris_payload": qris_payload})
